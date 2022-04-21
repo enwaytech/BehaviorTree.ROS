@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_TREE_BT_TOPIC_NODE_HPP_
-#define BEHAVIOR_TREE_BT_TOPIC_NODE_HPP_
+#ifndef BEHAVIOR_TREE_BT_TOPIC_PUBLISHER_NODE_HPP_
+#define BEHAVIOR_TREE_BT_TOPIC_PUBLISHER_NODE_HPP_
 
 #include <ros/ros.h>
 #include <behaviortree_cpp_v3/action_node.h>
@@ -24,37 +24,31 @@ namespace BT {
 
 
 template<class TopicT>
-class RosTopicNode : public BT::SyncActionNode {
+class RosTopicPublisherNode : public BT::SyncActionNode {
 protected:
 
   ros::NodeHandle node_;
-  ros::Subscriber topic_sub_;
+  ros::Publisher topic_pub_;
 
-  RosTopicNode(ros::NodeHandle &nh, const std::string &name, const BT::NodeConfiguration &conf)
-  : BT::SyncActionNode(name, conf), node_(nh) { }
-
-
-  BT::NodeStatus node_status = BT::NodeStatus::FAILURE;
-
-  BT::NodeStatus tick() override
+  RosTopicPublisherNode(ros::NodeHandle &nh, const std::string &name, const BT::NodeConfiguration &conf)
+  : BT::SyncActionNode(name, conf), node_(nh)
   {
-    if (topic_sub_== nullptr)
+    if (topic_pub_== nullptr)
     {
       std::string topic_name = getInput<std::string>("topic_name").value();
-      topic_sub_ = node_.subscribe<TopicT>(topic_name, 1, &RosTopicNode::topicCallback, this);
+      topic_pub_ = node_.advertise<TopicT>(topic_name, 1);
     }
-
-    return node_status;
   }
+
+  BT::NodeStatus tick() override = 0;
 
 public:
 
-  using BaseClass = RosTopicNode<TopicT>;
+  using BaseClass = RosTopicPublisherNode<TopicT>;
   using TopicType = TopicT;
-  
-  RosTopicNode() = delete;
 
-  virtual ~RosTopicNode() = default;
+  RosTopicPublisherNode() = delete;
+  virtual ~RosTopicPublisherNode() = default;
 
   static PortsList providedPorts()
   {
@@ -65,13 +59,11 @@ public:
     };
   }
 
-  virtual void topicCallback(const typename TopicType::ConstPtr &message) = 0;
-
 };
 
 
 template <class DerivedT> static
-void RegisterRosTopic(BT::BehaviorTreeFactory &factory, const std::string &registration_ID, ros::NodeHandle &node_handle)
+void RegisterRosTopicPublisher(BT::BehaviorTreeFactory &factory, const std::string &registration_ID, ros::NodeHandle &node_handle)
 {
   NodeBuilder builder = [&node_handle](const std::string &name, const BT::NodeConfiguration &config)
   {
@@ -82,7 +74,7 @@ void RegisterRosTopic(BT::BehaviorTreeFactory &factory, const std::string &regis
   manifest.type = getType<DerivedT>();
   manifest.ports = DerivedT::providedPorts();
   manifest.registration_ID = registration_ID;
-  const auto &basic_ports = RosTopicNode<typename DerivedT::TopicType>::providedPorts();
+  const auto &basic_ports = RosTopicPublisherNode<typename DerivedT::TopicType>::providedPorts();
   manifest.ports.insert(basic_ports.begin(), basic_ports.end());
 
   factory.registerBuilder(manifest, builder);
