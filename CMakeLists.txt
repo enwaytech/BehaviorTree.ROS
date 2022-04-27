@@ -76,8 +76,8 @@ target_link_libraries(test_server ${catkin_LIBRARIES} )
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
+## Mark other files for installation (e.g. launch and bag files, etc.)
+install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 ######################################################
 # EXAMPLES and TOOLS
-
-
-
