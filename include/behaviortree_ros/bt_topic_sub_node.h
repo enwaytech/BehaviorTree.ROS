@@ -32,17 +32,17 @@ protected:
 
   RosTopicSubscriberNode(ros::NodeHandle &nh, const std::string &name, const BT::NodeConfiguration &conf)
   : BT::SyncActionNode(name, conf), node_(nh)
-  { }
-
-  BT::NodeStatus node_status = BT::NodeStatus::FAILURE;
-  BT::NodeStatus tick() override
   {
     if (topic_sub_== nullptr)
     {
       std::string topic_name = getInput<std::string>("topic_name").value();
       topic_sub_ = node_.subscribe<TopicT>(topic_name, 1, &RosTopicSubscriberNode::topicCallback, this);
     }
+  }
 
+  BT::NodeStatus node_status = BT::NodeStatus::FAILURE;
+  BT::NodeStatus tick() override
+  {
     return node_status;
   }
 
