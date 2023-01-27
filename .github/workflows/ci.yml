@@ -11,10 +11,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
     steps:
       - name: "Setup ROS"
-        uses: ros-tooling/setup-ros@v0.2
+        uses: ros-tooling/setup-ros@v0.5
         with:
           required-ros-distributions: noetic
       - name: "Build & Test"
