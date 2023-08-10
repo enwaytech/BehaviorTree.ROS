@@ -16,8 +16,8 @@
 #define BEHAVIOR_TREE_BT_TOPIC_PUBLISHER_NODE_HPP_
 
 #include <ros/ros.h>
-#include <behaviortree_cpp_v3/action_node.h>
-#include <behaviortree_cpp_v3/bt_factory.h>
+#include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/bt_factory.h>
 
 
 namespace BT {
