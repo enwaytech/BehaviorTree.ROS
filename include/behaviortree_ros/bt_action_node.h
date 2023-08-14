@@ -59,14 +59,19 @@ public:
 
   virtual ~RosActionNode() = default;
 
-  /// These ports will be added automatically if this Node is
-  /// registered using RegisterRosAction<DeriveClass>()
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return  {
-      InputPort<std::string>("server_name", "name of the Action Server"),
-      InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")
-      };
+    PortsList basic = {InputPort<std::string>("server_name", "name of the Action Server"),
+                       InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
+  }
+
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
   }
 
   /// Method called when the Action makes a transition from IDLE to RUNNING.

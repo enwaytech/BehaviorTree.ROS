@@ -50,15 +50,20 @@ public:
   RosTopicPublisherNode() = delete;
   virtual ~RosTopicPublisherNode() = default;
 
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return
-    {
-      InputPort<std::string>("topic_name", "name of the ROS Topic"),
-      InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")
-    };
+    PortsList basic = {InputPort<std::string>("topic_name", "name of the ROS Topic"),
+                       InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
   }
 
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
+  }
 };
 
 

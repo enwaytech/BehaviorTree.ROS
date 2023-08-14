@@ -47,14 +47,19 @@ public:
 
   virtual ~RosServiceClientNode() = default;
 
-  /// These ports will be added automatically if this Node is
-  /// registered using RegisterRosAction<DeriveClass>()
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return  {
-      InputPort<std::string>("service_name", "name of the ROS service"),
-      InputPort<unsigned>("timeout", 100, "timeout to connect to server (milliseconds)")
-      };
+    PortsList basic = {InputPort<std::string>("service_name", "name of the ROS service"),
+                       InputPort<unsigned>("timeout", 100, "timeout to connect to server (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
+  }
+
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
   }
 
   /// User must implement this method.

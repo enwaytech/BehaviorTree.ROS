@@ -40,14 +40,21 @@ public:
   RosParamNode() = delete;
   virtual ~RosParamNode() = default;
 
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return
-    {
-      InputPort<std::string>("param_name", "name of the parameter on the Parameter Server"),
+    PortsList basic = {
+        InputPort<std::string>("param_name", "name of the parameter on the Parameter Server"),
     };
+    basic.insert(addition.begin(), addition.end());
+    return basic;
   }
 
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
+  }
 };
 
 

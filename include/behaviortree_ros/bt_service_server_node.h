@@ -48,10 +48,18 @@ public:
   virtual ~RosServiceServerNode() = default;
 
   static PortsList
+  providedBasicPorts(PortsList addition)
+  {
+    PortsList basic = {InputPort<std::string>("service_name", "name of the ROS service"),
+                       InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
+  }
+
+  static PortsList
   providedPorts()
   {
-    return {InputPort<std::string>("service_name", "name of the ROS service"),
-            InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")};
+    return providedBasicPorts({});
   }
 
   virtual bool serviceCallback(RequestType& request, ResponseType& response) = 0;
