@@ -1,4 +1,4 @@
-#include <behaviortree_ros/bt_service_node.h>
+#include <behaviortree_ros/bt_service_client_node.h>
 #include <behaviortree_ros/bt_action_node.h>
 #include <ros/ros.h>
 #include <behaviortree_ros/AddTwoInts.h>
@@ -38,19 +38,19 @@ public:
 // http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28c%2B%2B%29
 //-------------------------------------------------------------
 
-class AddTwoIntsAction: public RosServiceNode<behaviortree_ros::AddTwoInts>
+class AddTwoIntsAction: public RosServiceClientNode<behaviortree_ros::AddTwoInts>
 {
 
 public:
   AddTwoIntsAction( ros::NodeHandle& handle, const std::string& node_name, const NodeConfiguration & conf):
-  RosServiceNode<behaviortree_ros::AddTwoInts>(handle, node_name, conf) {}
+  RosServiceClientNode<behaviortree_ros::AddTwoInts>(handle, node_name, conf) {}
 
   static PortsList providedPorts()
   {
-    return  {
+    return  providedBasicPorts({
       InputPort<int>("first_int"),
       InputPort<int>("second_int"),
-      OutputPort<int>("sum") };
+      OutputPort<int>("sum") });
   }
 
   void sendRequest(RequestType& request) override
@@ -75,7 +75,7 @@ public:
     }
   }
 
-  virtual NodeStatus onFailedRequest(RosServiceNode::FailureCause failure) override
+  virtual NodeStatus onFailedRequest(RosServiceClientNode::FailureCause failure) override
   {
     ROS_ERROR("AddTwoInts request failed %d", static_cast<int>(failure));
     return NodeStatus::FAILURE;
@@ -99,9 +99,9 @@ RosActionNode<behaviortree_ros::FibonacciAction>(handle, name, conf) {}
 
   static PortsList providedPorts()
   {
-    return  {
+    return  providedBasicPorts({
       InputPort<int>("order"),
-      OutputPort<int>("result") };
+      OutputPort<int>("result") });
   }
 
   bool sendGoal(GoalType& goal) override
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
   BehaviorTreeFactory factory;
 
   factory.registerNodeType<PrintValue>("PrintValue");
-  RegisterRosService<AddTwoIntsAction>(factory, "AddTwoInts", nh);
+  RegisterRosServiceClient<AddTwoIntsAction>(factory, "AddTwoInts", nh);
   RegisterRosAction<FibonacciServer>(factory, "Fibonacci", nh);
 
   auto tree = factory.createTreeFromText(xml_text);
