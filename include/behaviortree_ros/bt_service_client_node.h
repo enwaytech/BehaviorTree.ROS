@@ -63,15 +63,17 @@ public:
   }
 
   /// User must implement this method.
-  virtual void sendRequest(RequestType& request) = 0;
+  virtual bool sendRequest(RequestType& request) = 0;
 
   /// Method (to be implemented by the user) to receive the reply.
   /// User can decide which NodeStatus it will return (SUCCESS or FAILURE).
   virtual NodeStatus onResponse( const ResponseType& rep) = 0;
 
-  enum FailureCause{
+  enum FailureCause
+  {
     MISSING_SERVER = 0,
-    FAILED_CALL = 1
+    FAILED_CALL = 1,
+    REQUEST_INVALID = 2,
   };
 
   /// Called when a service call failed. Can be overriden by the user.
@@ -106,7 +108,10 @@ protected:
     }
 
     typename ServiceT::Request request;
-    sendRequest(request);
+    if (!sendRequest(request))
+    {
+      return onFailedRequest(REQUEST_INVALID);
+    }
     bool received = service_client_.call( request, reply_ );
     if( !received )
     {
