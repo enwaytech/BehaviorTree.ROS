@@ -16,8 +16,8 @@
 #define BEHAVIOR_TREE_BT_PARAM_NODE_HPP_
 
 #include <ros/ros.h>
-#include <behaviortree_cpp_v3/action_node.h>
-#include <behaviortree_cpp_v3/bt_factory.h>
+#include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/bt_factory.h>
 
 
 namespace BT {
@@ -40,14 +40,21 @@ public:
   RosParamNode() = delete;
   virtual ~RosParamNode() = default;
 
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return
-    {
-      InputPort<std::string>("param_name", "name of the parameter on the Parameter Server"),
+    PortsList basic = {
+        InputPort<std::string>("param_name", "name of the parameter on the Parameter Server"),
     };
+    basic.insert(addition.begin(), addition.end());
+    return basic;
   }
 
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
+  }
 };
 
 

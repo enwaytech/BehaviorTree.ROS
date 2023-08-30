@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_TREE_BT_SERVICE_NODE_HPP_
-#define BEHAVIOR_TREE_BT_SERVICE_NODE_HPP_
+#ifndef BEHAVIOR_TREE_BT_SERVICE_CLIENT_NODE_HPP_
+#define BEHAVIOR_TREE_BT_SERVICE_CLIENT_NODE_HPP_
 
-#include <behaviortree_cpp_v3/action_node.h>
-#include <behaviortree_cpp_v3/bt_factory.h>
+#include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/bt_factory.h>
 #include <ros/ros.h>
 #include <ros/service_client.h>
 
@@ -25,47 +25,55 @@ namespace BT
 {
 
 /**
- * Base Action to implement a ROS Service
+ * Base Action to implement a ROS Service Client
  */
 template<class ServiceT>
-class RosServiceNode : public BT::SyncActionNode
+class RosServiceClientNode : public BT::SyncActionNode
 {
 protected:
-
-  RosServiceNode(ros::NodeHandle& nh, const std::string& name, const BT::NodeConfiguration & conf):
-   BT::SyncActionNode(name, conf), node_(nh) { }
+  RosServiceClientNode(ros::NodeHandle& nh, const std::string& name, const BT::NodeConfiguration& conf)
+    : BT::SyncActionNode(name, conf)
+    , node_(nh)
+  {
+  }
 
 public:
-
-  using BaseClass    = RosServiceNode<ServiceT>;
+  using BaseClass = RosServiceClientNode<ServiceT>;
   using ServiceType  = ServiceT;
   using RequestType  = typename ServiceT::Request;
   using ResponseType = typename ServiceT::Response;
 
-  RosServiceNode() = delete;
+  RosServiceClientNode() = delete;
 
-  virtual ~RosServiceNode() = default;
+  virtual ~RosServiceClientNode() = default;
 
-  /// These ports will be added automatically if this Node is
-  /// registered using RegisterRosAction<DeriveClass>()
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return  {
-      InputPort<std::string>("service_name", "name of the ROS service"),
-      InputPort<unsigned>("timeout", 100, "timeout to connect to server (milliseconds)")
-      };
+    PortsList basic = {InputPort<std::string>("service_name", "name of the ROS service"),
+                       InputPort<unsigned>("timeout", 100, "timeout to connect to server (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
+  }
+
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
   }
 
   /// User must implement this method.
-  virtual void sendRequest(RequestType& request) = 0;
+  virtual bool sendRequest(RequestType& request) = 0;
 
   /// Method (to be implemented by the user) to receive the reply.
   /// User can decide which NodeStatus it will return (SUCCESS or FAILURE).
   virtual NodeStatus onResponse( const ResponseType& rep) = 0;
 
-  enum FailureCause{
+  enum FailureCause
+  {
     MISSING_SERVER = 0,
-    FAILED_CALL = 1
+    FAILED_CALL = 1,
+    REQUEST_INVALID = 2,
   };
 
   /// Called when a service call failed. Can be overriden by the user.
@@ -100,7 +108,10 @@ protected:
     }
 
     typename ServiceT::Request request;
-    sendRequest(request);
+    if (!sendRequest(request))
+    {
+      return onFailedRequest(REQUEST_INVALID);
+    }
     bool received = service_client_.call( request, reply_ );
     if( !received )
     {
@@ -113,10 +124,11 @@ protected:
 
 /// Method to register the service into a factory.
 /// It gives you the opportunity to set the ros::NodeHandle.
-template <class DerivedT> static
-  void RegisterRosService(BT::BehaviorTreeFactory& factory,
-                     const std::string& registration_ID,
-                     ros::NodeHandle& node_handle)
+template<class DerivedT>
+static void
+RegisterRosServiceClient(BT::BehaviorTreeFactory& factory,
+                         const std::string& registration_ID,
+                         ros::NodeHandle& node_handle)
 {
   NodeBuilder builder = [&node_handle](const std::string& name, const NodeConfiguration& config) {
     return std::make_unique<DerivedT>(node_handle, name, config );
@@ -126,7 +138,7 @@ template <class DerivedT> static
   manifest.type = getType<DerivedT>();
   manifest.ports = DerivedT::providedPorts();
   manifest.registration_ID = registration_ID;
-  const auto& basic_ports = RosServiceNode< typename DerivedT::ServiceType>::providedPorts();
+  const auto& basic_ports = RosServiceClientNode<typename DerivedT::ServiceType>::providedPorts();
   manifest.ports.insert( basic_ports.begin(), basic_ports.end() );
 
   factory.registerBuilder( manifest, builder );
@@ -135,4 +147,4 @@ template <class DerivedT> static
 
 }  // namespace BT
 
-#endif  // BEHAVIOR_TREE_BT_SERVICE_NODE_HPP_
+#endif // BEHAVIOR_TREE_BT_SERVICE_CLIENT_NODE_HPP_

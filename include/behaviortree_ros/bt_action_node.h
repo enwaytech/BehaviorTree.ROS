@@ -16,8 +16,8 @@
 #ifndef BEHAVIOR_TREE_BT_ACTION_NODE_HPP_
 #define BEHAVIOR_TREE_BT_ACTION_NODE_HPP_
 
-#include <behaviortree_cpp_v3/action_node.h>
-#include <behaviortree_cpp_v3/bt_factory.h>
+#include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/bt_factory.h>
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 
@@ -59,14 +59,19 @@ public:
 
   virtual ~RosActionNode() = default;
 
-  /// These ports will be added automatically if this Node is
-  /// registered using RegisterRosAction<DeriveClass>()
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return  {
-      InputPort<std::string>("server_name", "name of the Action Server"),
-      InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")
-      };
+    PortsList basic = {InputPort<std::string>("server_name", "name of the Action Server"),
+                       InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
+  }
+
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
   }
 
   /// Method called when the Action makes a transition from IDLE to RUNNING.

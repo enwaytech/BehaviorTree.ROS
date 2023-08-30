@@ -1,4 +1,4 @@
-#include <behaviortree_ros/bt_service_node.h>
+#include <behaviortree_ros/bt_service_client_node.h>
 #include <behaviortree_ros/bt_action_node.h>
 #include <ros/ros.h>
 #include <behaviortree_ros/AddTwoInts.h>
@@ -38,27 +38,30 @@ public:
 // http://wiki.ros.org/ROS/Tutorials/WritingServiceClient%28c%2B%2B%29
 //-------------------------------------------------------------
 
-class AddTwoIntsAction: public RosServiceNode<behaviortree_ros::AddTwoInts>
+class AddTwoIntsAction: public RosServiceClientNode<behaviortree_ros::AddTwoInts>
 {
 
 public:
   AddTwoIntsAction( ros::NodeHandle& handle, const std::string& node_name, const NodeConfiguration & conf):
-  RosServiceNode<behaviortree_ros::AddTwoInts>(handle, node_name, conf) {}
+  RosServiceClientNode<behaviortree_ros::AddTwoInts>(handle, node_name, conf) {}
 
   static PortsList providedPorts()
   {
-    return  {
+    return  providedBasicPorts({
       InputPort<int>("first_int"),
       InputPort<int>("second_int"),
-      OutputPort<int>("sum") };
+      OutputPort<int>("sum") });
   }
 
-  void sendRequest(RequestType& request) override
+  bool
+  sendRequest(RequestType& request) override
   {
     getInput("first_int", request.a);
     getInput("second_int", request.b);
     expected_result_ = request.a + request.b;
     ROS_INFO("AddTwoInts: sending request");
+
+    return true;
   }
 
   NodeStatus onResponse(const ResponseType& rep) override
@@ -75,7 +78,7 @@ public:
     }
   }
 
-  virtual NodeStatus onFailedRequest(RosServiceNode::FailureCause failure) override
+  virtual NodeStatus onFailedRequest(RosServiceClientNode::FailureCause failure) override
   {
     ROS_ERROR("AddTwoInts request failed %d", static_cast<int>(failure));
     return NodeStatus::FAILURE;
@@ -99,9 +102,9 @@ RosActionNode<behaviortree_ros::FibonacciAction>(handle, name, conf) {}
 
   static PortsList providedPorts()
   {
-    return  {
+    return  providedBasicPorts({
       InputPort<int>("order"),
-      OutputPort<int>("result") };
+      OutputPort<int>("result") });
   }
 
   bool sendGoal(GoalType& goal) override
@@ -158,8 +161,8 @@ private:
 
   // Simple tree, used to execute once each action.
   static const char* xml_text = R"(
- <root >
-     <BehaviorTree>
+ <root BTCPP_format="4">
+     <BehaviorTree ID="MainTree">
         <Sequence>
             <AddTwoInts service_name = "add_two_ints"
                         first_int = "3" second_int = "4"
@@ -186,7 +189,7 @@ int main(int argc, char **argv)
   BehaviorTreeFactory factory;
 
   factory.registerNodeType<PrintValue>("PrintValue");
-  RegisterRosService<AddTwoIntsAction>(factory, "AddTwoInts", nh);
+  RegisterRosServiceClient<AddTwoIntsAction>(factory, "AddTwoInts", nh);
   RegisterRosAction<FibonacciServer>(factory, "Fibonacci", nh);
 
   auto tree = factory.createTreeFromText(xml_text);
@@ -196,7 +199,7 @@ int main(int argc, char **argv)
   while( ros::ok() && (status == NodeStatus::IDLE || status == NodeStatus::RUNNING))
   {
     ros::spinOnce();
-    status = tree.tickRoot();
+    status = tree.tickOnce();
     std::cout << status << std::endl;
     ros::Duration sleep_time(0.01);
     sleep_time.sleep();

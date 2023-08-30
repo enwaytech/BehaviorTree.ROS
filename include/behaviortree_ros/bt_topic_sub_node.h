@@ -16,8 +16,8 @@
 #define BEHAVIOR_TREE_BT_TOPIC_SUBSCRIBER_NODE_HPP_
 
 #include <ros/ros.h>
-#include <behaviortree_cpp_v3/action_node.h>
-#include <behaviortree_cpp_v3/bt_factory.h>
+#include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/bt_factory.h>
 
 
 namespace BT {
@@ -54,13 +54,19 @@ public:
   RosTopicSubscriberNode() = delete;
   virtual ~RosTopicSubscriberNode() = default;
 
-  static PortsList providedPorts()
+  static PortsList
+  providedBasicPorts(PortsList addition)
   {
-    return
-    {
-      InputPort<std::string>("topic_name", "name of the ROS Topic"),
-      InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")
-    };
+    PortsList basic = {InputPort<std::string>("topic_name", "name of the ROS Topic"),
+                       InputPort<unsigned>("timeout", 500, "timeout to connect (milliseconds)")};
+    basic.insert(addition.begin(), addition.end());
+    return basic;
+  }
+
+  static PortsList
+  providedPorts()
+  {
+    return providedBasicPorts({});
   }
 
   virtual void topicCallback(const typename TopicType::ConstPtr &message) = 0;
