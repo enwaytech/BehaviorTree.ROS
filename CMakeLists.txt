@@ -45,7 +45,7 @@ generate_messages(
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES
+    LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS ${ROS_DEPENDENCIES}
 )
 
@@ -54,10 +54,8 @@ include_directories( include ${catkin_INCLUDE_DIRS})
 ######################################################
 # LIBRARIES
 
-#header only for the time being
-
-#add_library(behaviortree_ros ... )
-#target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+add_library(${PROJECT_NAME} src/loggers/rosout_logger.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ######################################################
 # TESTS
@@ -78,6 +76,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(TARGETS ${PROJECT_NAME}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
 
 ######################################################
 # EXAMPLES and TOOLS

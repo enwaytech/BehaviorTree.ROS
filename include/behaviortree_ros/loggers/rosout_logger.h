@@ -4,6 +4,8 @@
 #include <behaviortree_cpp/loggers/abstract_logger.h>
 #include <ros/console.h>
 
+#include <atomic>
+
 namespace BT
 {
 
